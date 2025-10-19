@@ -1,20 +1,20 @@
-# Use Node.js 18 LTS as the base image
+# Use Node.js 18 LTS base image
 FROM node:18-alpine
 
-# Set working directory inside container
+# Set working directory
 WORKDIR /app
 
-# Copy backend package.json and package-lock.json
+# Copy only backend package files and install dependencies
 COPY backend/package*.json ./
 
-# Install dependencies for backend
-RUN npm install
+# Ensure bcrypt builds for Linux inside container
+RUN npm install bcrypt --build-from-source && npm install
 
-# Copy the entire backend folder contents into the container
+# Copy backend source files into the container
 COPY backend/ ./
 
-# Expose port 8080 for your backend
+# Expose backend port
 EXPOSE 8080
 
-# Run your backend server
+# Start the server
 CMD ["node", "server.js"]
