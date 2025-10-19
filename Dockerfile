@@ -1,20 +1,20 @@
-# Use official Node.js LTS base image
+# Use Node.js 18 LTS as the base image
 FROM node:18-alpine
 
-# Set working directory inside the container
+# Set working directory inside container
 WORKDIR /app
 
-# Copy backend package files first (for caching)
+# Copy backend package.json and package-lock.json
 COPY backend/package*.json ./
 
-# Install dependencies
+# Install dependencies for backend
 RUN npm install
 
-# Copy the rest of the backend source code
-COPY backend/ .
+# Copy the entire backend folder contents into the container
+COPY backend/ ./
 
-# Expose the port your server listens on (e.g., 8080)
+# Expose port 8080 for your backend
 EXPOSE 8080
 
-# Start the backend server
+# Run your backend server
 CMD ["node", "server.js"]
