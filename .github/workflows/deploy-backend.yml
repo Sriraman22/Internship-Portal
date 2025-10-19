@@ -1,6 +1,0 @@
-name: Deploy Backend to Azure
-
-on:
-  push:
-    branches:
-      - main  # deploy when code is
