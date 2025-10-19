@@ -1,34 +1,31 @@
-name: CI - Build and Push Docker Image
+name: CI - Build & Push to ACR
 
 on:
   push:
-    branches:
-      - main
-
-env:
-  ACR_NAME: internshipportalacr
-  IMAGE_NAME: internship-portal-app
+    branches: [ main ]
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to Azure
-        uses: azure/login@v2
+      - name: Azure Login
+        uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Log in to Azure Container Registry
-        run: az acr login --name $ACR_NAME
+        run: az acr login --name internshipportalacr
 
-      - name: Build and push Docker image
-        run: |
-          docker build -t $ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.run_number }} .
-          docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.run_number }}
+      - name: Build Docker image
+        run: docker build -t internshipportalacr.azurecr.io/internship-portal-app:${{ github.run_number }} .
 
-      - name: Logout from Azure
-        run: az logout
+      - name: Push image to ACR
+        run: docker push internshipportalacr.azurecr.io/internship-portal-app:${{ github.run_number }}
+
+      - name: Save image tag for CD pipeline
+        run: echo "IMAGE_TAG=${{ github.run_number }}" >> $GITHUB_ENV
+
