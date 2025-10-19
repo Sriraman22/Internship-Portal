@@ -1,0 +1,37 @@
+name: CD - Deploy to AKS
+
+on:
+  workflow_run:
+    workflows: ["CI - Build and Push Docker Image"]
+    types:
+      - completed
+
+env:
+  RG_NAME: InternPortal-RG-India
+  AKS_NAME: internship-portal-aks
+  ACR_NAME: internshipportalacr
+  IMAGE_NAME: internship-portal-app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get AKS credentials
+        run: az aks get-credentials --resource-group $RG_NAME --name $AKS_NAME --overwrite-existing
+
+      - name: Create Kubernetes deployment
+        run: |
+          kubectl create deployment $IMAGE_NAME --image=$ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.run_number }} --dry-run=client -o yaml | kubectl apply -f -
+          kubectl expose deployment $IMAGE_NAME --type=LoadBalancer --port=80 --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Verify Deployment
+        run: kubectl get svc
