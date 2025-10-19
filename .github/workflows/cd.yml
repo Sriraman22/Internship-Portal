@@ -2,36 +2,30 @@ name: CD - Deploy to AKS
 
 on:
   workflow_run:
-    workflows: ["CI - Build and Push Docker Image"]
+    workflows: ["CI - Build & Push to ACR"]
     types:
       - completed
-
-env:
-  RG_NAME: InternPortal-RG-India
-  AKS_NAME: internship-portal-aks
-  ACR_NAME: internshipportalacr
-  IMAGE_NAME: internship-portal-app
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to Azure
-        uses: azure/login@v2
+      - name: Azure Login
+        uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Get AKS credentials
-        run: az aks get-credentials --resource-group $RG_NAME --name $AKS_NAME --overwrite-existing
+      - name: Set AKS context
+        uses: azure/aks-set-context@v3
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          cluster-name: internship-portal-aks
+          resource-group: InternPortal-RG-India
 
-      - name: Create Kubernetes deployment
+      - name: Deploy new image
         run: |
-          kubectl create deployment $IMAGE_NAME --image=$ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.run_number }} --dry-run=client -o yaml | kubectl apply -f -
-          kubectl expose deployment $IMAGE_NAME --type=LoadBalancer --port=80 --dry-run=client -o yaml | kubectl apply -f -
-
-      - name: Verify Deployment
-        run: kubectl get svc
+          kubectl set image deployment/internship-portal-app internship-portal-app=internshipportalacr.azurecr.io/internship-portal-app:${{ github.run_number }}
+          kubectl rollout status deployment/internship-portal-app
