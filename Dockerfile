@@ -1,20 +1,17 @@
-# Use Node.js 18 LTS base image
-FROM node:18-alpine
+# Use Node 20 (required for Azure SDKs)
+FROM node:20-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Copy only backend package files and install dependencies
+# Copy backend dependencies
 COPY backend/package*.json ./
 
-# Ensure bcrypt builds for Linux inside container
-RUN npm install bcrypt --build-from-source && npm install
+# Install dependencies
+RUN npm install
 
-# Copy backend source files into the container
+# Copy backend source
 COPY backend/ ./
 
-# Expose backend port
 EXPOSE 8080
 
-# Start the server
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
